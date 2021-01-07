@@ -1,0 +1,18 @@
+drop table if exists role;
+drop table if exists user;
+drop table if exists user_role;
+drop table if exists message;
+drop table if exists friend;
+create table role (id bigint not null auto_increment, name varchar(255), primary key (id));
+create table user (id bigint not null auto_increment, username varchar(255), password varchar(255), email varchar(255), gender integer not null, name varchar(255), surname varchar(255), patronymic varchar(255), birthdate date, country varchar(255), primary key (id));
+create table user_role (user_id bigint not null, role_id bigint not null, primary key (user_id, role_id));
+create table message (id bigint not null auto_increment, text varchar(255), from_user_id bigint, to_user_id bigint, primary key (id));
+create table friend (first_user bigint not null, second_user bigint not null, status varchar(255), primary key (first_user, second_user));
+alter table user add constraint user_fk0 unique (username);
+alter table user add constraint user_fk1 unique (email);
+alter table user_role add constraint user_role_fk0 foreign key (role_id) references role (id);
+alter table user_role add constraint user_role_fk1 foreign key (user_id) references user (id);
+alter table message add constraint message_fk0 foreign key (from_user_id) references user (id);
+alter table message add constraint message_fk1 foreign key (to_user_id) references user (id);
+alter table friend add constraint friend_fk0 foreign key (first_user) references user (id);
+alter table friend add constraint friend_fk1 foreign key (second_user) references user (id);

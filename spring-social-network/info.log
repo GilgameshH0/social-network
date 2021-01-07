@@ -1,0 +1,30 @@
+2021.янв..06 16:28:37.205 TRACE - Приложение запущено!
+2021.янв..06 16:30:04.706 TRACE - Приложение запущено!
+2021.янв..06 16:30:34.310 TRACE - Приложение запущено!
+2021.янв..06 16:40:16.723 TRACE - Приложение запущено!
+2021.янв..06 16:40:34.510 TRACE - User registered successfully! User(id=16, username=ole44gFULL, password=$2a$10$7QbaMYkK1EEFQMppeJvu8OuxSXVHfUEW/GnYtTbZ5l.Zw9Tb/lCvC, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=olegF44ULL@yandex.ru, roles=[social.network.model.Role@5e9fc1fb])
+2021.янв..06 19:18:31.336 TRACE - Приложение запущено!
+2021.янв..06 19:27:52.548 TRACE - Приложение запущено!
+2021.янв..06 20:57:33.726 TRACE - Приложение запущено!
+2021.янв..06 20:57:59.826 TRACE - Приложение запущено!
+2021.янв..06 20:58:31.209 TRACE - User registered successfully! User(id=2, username=olegFULL, password=$2a$10$yuKGVhyrR1g79yvU4b86oupPKR3PXkf.HHX8qhxxBP4uj2m9XI7I., name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=olegFULL@yandex.ru, roles=[social.network.model.Role@740c995d])
+2021.янв..06 21:00:32.267 TRACE - User registered successfully! User(id=3, username=kiril312, password=$2a$10$Y0LoW1HnRvImXT19xnrocOmFlj9k1YKLdNZL63D47iJiUIVFZDI7W, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=kirill@yandex.ru, roles=[social.network.model.Role@53707b7])
+2021.янв..06 21:09:29.917 TRACE - Приложение запущено!
+2021.янв..06 21:09:50.057 TRACE - User registered successfully! User(id=4, username=sahsa, password=$2a$10$9to1po.SD934fHCg8Ktv8Oh6OX6k9bIFEmjuJZdlPAcWFgyQoqdrK, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=Russia, email=sadf@yandex.ru, roles=[social.network.model.Role@7fe972e0])
+2021.янв..06 21:13:53.069 TRACE - sahsa successfully created token! eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzYWhzYSIsImlhdCI6MTYwOTk1NjgzMywiZXhwIjoxNjA5OTYwNDMzfQ.bElPo5lGDqHyrsejPk-D-M74VHan8DyN_8B2khhLvQUFUg4H3nZptMcpG89MCi21JXghxLWJJiTBK_WvZhU3_w
+2021.янв..06 21:14:25.119 TRACE - message sent! Message(id=1, text=hello!, fromUserId=4, toUserId=2)
+2021.янв..07 00:52:32.272 TRACE - Приложение запущено!
+2021.янв..07 00:54:58.010 TRACE - Приложение запущено!
+2021.янв..07 00:56:34.547 TRACE - Приложение запущено!
+2021.янв..07 00:56:42.654 TRACE - User registered successfully! User(id=2, username=olegFULL, password=$2a$10$K.XlkxqbnB3NHDsLMrQxM.wKsXWNh330P0mLzoBND2r2BuyBb8dRy, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=olegFULL@yandex.ru, roles=[social.network.model.Role@dd2c96a])
+2021.янв..07 00:58:20.824 TRACE - Приложение запущено!
+2021.янв..07 00:58:25.345 TRACE - User registered successfully! User(id=2, username=olegFULL, password=$2a$10$hFi7WzWpWdKiHdVS.NSRGOIJkWSVFs1wM7tkpFbGYgRltspnU53bG, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=olegFULL@yandex.ru, roles=[social.network.model.Role@1cb0a1de])
+2021.янв..07 01:00:06.172 TRACE - olegFULL successfully created token for user olegFULL! eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJvbGVnRlVMTCIsImlhdCI6MTYwOTk3MDQwNiwiZXhwIjoxNjA5OTc0MDA2fQ.CZiR-LA5nhEp-7IFsbG_1Brnq5ZjJHLeRYqgtT9bj_GLLYBrhG2NlKaHaK_2IKwlbUwU0qZmOIzBD4Tym1cTpA
+2021.янв..07 01:23:16.104 TRACE - Приложение запущено!
+2021.янв..07 01:24:04.371 TRACE - Приложение запущено!
+2021.янв..07 01:24:41.212 TRACE - User registered successfully! User(id=3, username=kirillFULL, password=$2a$10$o61t4MoCQhxAjqf6Pd68FO40cqHOnheB6OIiUrb8j2GMZvsLaxCeC, name=null, surname=null, patronymic=null, gender=0, birthdate=null, country=null, email=kirillFULL@yandex.ru, roles=[social.network.model.Role@6f59e721])
+2021.янв..07 01:24:51.196 TRACE - olegFULL successfully created token for user olegFULL! eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJvbGVnRlVMTCIsImlhdCI6MTYwOTk3MTg5MSwiZXhwIjoxNjA5OTc1NDkxfQ.hMTPqOJLiHDvhC_C4rythniKtA3tFN4yeo2pp7eVuRkj9OfQnS2sG7_XcTOEOzIPdIxurPjenp7s3AFnTHWKgQ
+2021.янв..07 01:26:35.411 TRACE - kirillFULL successfully created token for user kirillFULL! eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJraXJpbGxGVUxMIiwiaWF0IjoxNjA5OTcxOTk1LCJleHAiOjE2MDk5NzU1OTV9.W0NCemnNQpbm8ubRzntk5BsjNxT1nSux8qSxQQ__ayaQeSKzGwLpjWNvVags_JFgQihXwhOPQ55wW6BvOeYjlw
+2021.янв..07 23:03:43.319 TRACE - Приложение запущено!
+2021.янв..07 23:11:29.263 TRACE - Приложение запущено!
+2021.янв..07 23:42:31.642 TRACE - Приложение запущено!
