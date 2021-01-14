@@ -7,24 +7,20 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import social.network.dto.UserDTO;
-import social.network.exception.EmailAlreadyInUseException;
-import social.network.exception.UserDoesNotExistsException;
-import social.network.exception.UsernameAlreadyInUseException;
-import social.network.exception.WrongBearerException;
+import social.network.dto.UserGetResponseDto;
+import social.network.dto.UserLogInRequestDto;
+import social.network.dto.UserSignUpAndUpdateRequestDto;
+import social.network.exception.SocialNetworkException;
 import social.network.mapper.UserMapper;
 import social.network.model.*;
-import social.network.dto.auth.LogInUser;
-import social.network.dto.auth.SignUpUser;
 import social.network.repository.RoleRepository;
+import social.network.repository.UserPostRepository;
 import social.network.repository.UserRepository;
 import social.network.security.jwt.JwtUtils;
 import social.network.security.service.UserDetailsImpl;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -34,121 +30,130 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final UserPostRepository userPostRepository;
     private final PasswordEncoder encoder;
     private final JwtUtils jwtUtils;
     private final UserMapper userMapper;
 
-    public UserService(AuthenticationManager authenticationManager, UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder encoder, JwtUtils jwtUtils, UserMapper userMapper) {
+    public UserService(AuthenticationManager authenticationManager, UserRepository userRepository, RoleRepository roleRepository, UserPostRepository userPostRepository, PasswordEncoder encoder, JwtUtils jwtUtils, UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.userPostRepository = userPostRepository;
         this.encoder = encoder;
         this.jwtUtils = jwtUtils;
         this.userMapper = userMapper;
     }
 
-    public void registerUser(SignUpUser signUpUser) throws UsernameAlreadyInUseException, EmailAlreadyInUseException {
-        if (userRepository.existsByUsername(signUpUser.getUsername())) {
-           throw new UsernameAlreadyInUseException(signUpUser.getUsername());
-        }
-        if (userRepository.existsByEmail(signUpUser.getEmail())) {
-            throw new EmailAlreadyInUseException();
+    public void registerUser(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
+
+        if (userRepository.existsByUsername(userSignUpAndUpdateRequestDto.getUsername()) || userRepository.existsByEmail(userSignUpAndUpdateRequestDto.getEmail())) {
+            throw new SocialNetworkException(ErrorCode.UsernameOrEmailAlreadyInUse, "Username or email are already in use!");
         }
         User user = new User(
-                signUpUser.getUsername(),
-                encoder.encode(signUpUser.getPassword()),
-                signUpUser.getName(),
-                signUpUser.getSurname(),
-                signUpUser.getPatronymic(),
-                signUpUser.getGender(),
-                signUpUser.getBirthdate(),
-                signUpUser.getCountry(),
-                signUpUser.getEmail());
+                userSignUpAndUpdateRequestDto.getUsername(),
+                encoder.encode(userSignUpAndUpdateRequestDto.getPassword()),
+                userSignUpAndUpdateRequestDto.getName(),
+                userSignUpAndUpdateRequestDto.getSurname(),
+                userSignUpAndUpdateRequestDto.getPatronymic(),
+                userSignUpAndUpdateRequestDto.getGender(),
+                userSignUpAndUpdateRequestDto.getBirthdate(),
+                userSignUpAndUpdateRequestDto.getCountry(),
+                userSignUpAndUpdateRequestDto.getEmail());
         Set<Role> roles = new HashSet<>();
         Role userRole = roleRepository.findByName(ERole.ROLE_USER);
         roles.add(userRole);
         user.setRoles(roles);
         userRepository.save(user);
-        log.trace("User registered successfully! {}", user.toString());
+        log.trace("User registered successfully! {}", user);
     }
 
-    public JwtResponse authenticateUser(LogInUser logInUser) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(logInUser.getUsername(), logInUser.getPassword()));
+    public JwtResponse authenticateUser(UserLogInRequestDto userLogInRequestDto) throws SocialNetworkException {
+        if (!userRepository.existsByUsername(userLogInRequestDto.getUsername())) {
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userLogInRequestDto.getUsername() + " does not exists!");
+        }
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userLogInRequestDto.getUsername(), userLogInRequestDto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        log.trace(logInUser.getUsername() + " successfully created token for user " + logInUser.getUsername() + "! {}", jwt);
+        log.trace(userLogInRequestDto.getUsername() + " successfully created token for user " + userLogInRequestDto.getUsername() + "! {}", jwt);
         return new JwtResponse(jwt,
                 userDetails.getId(),
                 userDetails.getUsername(),
                 userDetails.getEmail());
     }
 
-    public UserDTO findUser(Long id) throws UserDoesNotExistsException {
+    public UserGetResponseDto findUser(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new UserDoesNotExistsException(id);
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
         }
         return userMapper.toDto(userRepository.findUserById(id));
     }
 
-    public void updateCurrentUser(String bearer, SignUpUser signUpUser) throws WrongBearerException {
+    public void updateCurrentUser(String bearer, UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
         String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)){
-            throw new WrongBearerException(bearer);
+        if (!userRepository.existsByUsername(username)) {
+            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
         }
         User user = userRepository.findUserByUsername(username);
-        updateUserInRepository(signUpUser, user);
+        updateUserInRepository(userSignUpAndUpdateRequestDto, user);
         log.trace(username + " successfully updated his/her account!");
     }
 
-    public void updateUser(SignUpUser signUpUser, Long id) throws UserDoesNotExistsException {
+    public void updateUser(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new UserDoesNotExistsException(id);
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
         }
         User user = userRepository.findUserById(id);
-        updateUserInRepository(signUpUser, user);
+        updateUserInRepository(userSignUpAndUpdateRequestDto, user);
         log.trace("data successfully updated! {}", user.toString());
     }
 
     @Transactional
-    public void removeCurrentUser(String bearer) throws WrongBearerException {
+    public void removeCurrentUser(String bearer) throws SocialNetworkException {
         String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)){
-            throw new WrongBearerException(bearer);
+        if (!userRepository.existsByUsername(username)) {
+            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
         }
+        User user = userRepository.findUserByUsername(username);
+        userPostRepository.removeAllByOwner(user);
+        log.trace("All posts from user with username: " + username + " successfully removed!");
         userRepository.removeUserByUsername(username);
         log.trace(username + " is successfully deleted his/her account");
     }
 
     @Transactional
-    public void removeUser(Long id) throws UserDoesNotExistsException {
+    public void removeUser(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new UserDoesNotExistsException(id);
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
         }
+        User user = userRepository.findUserById(id);
+        userPostRepository.removeAllByOwner(user);
+        log.trace("All posts from user with id: " + id + " successfully removed!");
         userRepository.removeUserById(id);
-        log.trace("User with id:"+ id + " deleted successfully!");
+        log.trace("User with id:" + id + " deleted successfully!");
     }
 
-    public List<UserDTO> findAllUserByCountry(String country){
-        List<User> userList = userRepository.findAllByCountry(country);
-        List<UserDTO> userDTOList = new ArrayList<>();
+    public Set<UserGetResponseDto> findAllUserByCountry(String country) {
+        Set<User> userList = userRepository.findAllByCountry(country);
+        Set<UserGetResponseDto> userGetResponseDtoList = new HashSet<>();
         for (User user : userList) {
-            UserDTO userDTO = userMapper.toDto(user);
-            userDTOList.add(userDTO);
+            UserGetResponseDto userGetResponseDto = userMapper.toDto(user);
+            userGetResponseDtoList.add(userGetResponseDto);
         }
-        return userDTOList;
+        return userGetResponseDtoList;
     }
 
-    private void updateUserInRepository(SignUpUser signUpUser, User user) {
-        user.setUsername(signUpUser.getUsername());
-        user.setPassword(signUpUser.getPassword());
-        user.setName(signUpUser.getName());
-        user.setSurname(signUpUser.getSurname());
-        user.setPatronymic(signUpUser.getPatronymic());
-        user.setGender(signUpUser.getGender());
-        user.setBirthdate(signUpUser.getBirthdate());
-        user.setCountry(signUpUser.getCountry());
-        user.setEmail(signUpUser.getEmail());
+    private void updateUserInRepository(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, User user) {
+        user.setUsername(userSignUpAndUpdateRequestDto.getUsername());
+        user.setPassword(userSignUpAndUpdateRequestDto.getPassword());
+        user.setName(userSignUpAndUpdateRequestDto.getName());
+        user.setSurname(userSignUpAndUpdateRequestDto.getSurname());
+        user.setPatronymic(userSignUpAndUpdateRequestDto.getPatronymic());
+        user.setGender(userSignUpAndUpdateRequestDto.getGender());
+        user.setBirthdate(userSignUpAndUpdateRequestDto.getBirthdate());
+        user.setCountry(userSignUpAndUpdateRequestDto.getCountry());
+        user.setEmail(userSignUpAndUpdateRequestDto.getEmail());
         userRepository.save(user);
     }
 }

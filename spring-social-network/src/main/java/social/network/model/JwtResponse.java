@@ -2,12 +2,9 @@ package social.network.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
-
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
@@ -20,5 +17,20 @@ public class JwtResponse {
         this.id = id;
         this.username = username;
         this.email = email;
+    }
+
+    public JwtResponse() {
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        JwtResponse jwtResponse = (JwtResponse) obj;
+        return token.equals(jwtResponse.token);
     }
 }

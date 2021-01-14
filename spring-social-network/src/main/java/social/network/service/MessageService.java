@@ -2,18 +2,18 @@ package social.network.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import social.network.dto.MessageDTO;
-import social.network.exception.UserDoesNotExistsException;
-import social.network.exception.WrongBearerException;
+import social.network.dto.MessageSendRequestDto;
+import social.network.exception.SocialNetworkException;
 import social.network.mapper.MessageMapper;
+import social.network.model.ErrorCode;
 import social.network.model.Message;
 import social.network.model.User;
 import social.network.repository.MessageRepository;
 import social.network.repository.UserRepository;
 import social.network.security.jwt.JwtUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -32,71 +32,71 @@ public class MessageService {
         this.jwtUtils = jwtUtils;
     }
 
-    public void sendMessage(String bearer, MessageDTO messageDTO) throws WrongBearerException {
+    public void sendMessage(String bearer, MessageSendRequestDto messageSendRequestDto) throws SocialNetworkException {
         String username = jwtUtils.getUsernameFromTokenString(bearer);
         if (!userRepository.existsByUsername(username)){
-            throw new WrongBearerException(bearer);
+            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
         }
         User user = userRepository.findUserByUsername(username);
-        Message message = messageMapper.toEntity(messageDTO);
-        message.setFromUserId(user.getId());
+        Message message = messageMapper.toEntity(messageSendRequestDto);
+        message.setFromUser(user);
         messageRepository.save(message);
-        log.trace("message sent! {}", message.toString());
+        log.trace("message sent! {}", message);
     }
 
-    public List<MessageDTO> findAllSentMessagesOfCurrentUser(String bearer) throws WrongBearerException {
+    public Set<MessageSendRequestDto> findAllSentMessagesOfCurrentUser(String bearer) throws SocialNetworkException {
         String username = jwtUtils.getUsernameFromTokenString(bearer);
         if (!userRepository.existsByUsername(username)){
-            throw new WrongBearerException(bearer);
+            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
         }
         User user = userRepository.findUserByUsername(username);
-        List<Message> messageList = messageRepository.findAllMessagesByFromUserId(user.getId());
-        List<MessageDTO> messageDTOList = new ArrayList<>();
+        Set<Message> messageList = messageRepository.findAllMessagesByFromUserId(user.getId());
+        Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();
         for (Message message : messageList) {
-            MessageDTO messageDTO = messageMapper.toDto(message);
-            messageDTOList.add(messageDTO);
+            MessageSendRequestDto messageSendRequestDto = messageMapper.toDto(message);
+            messageSendRequestDtoList.add(messageSendRequestDto);
         }
-        return messageDTOList;
+        return messageSendRequestDtoList;
     }
 
-    public List<MessageDTO> findAllReceivedMessagesOfCurrentUser(String bearer) throws WrongBearerException {
+    public Set<MessageSendRequestDto> findAllReceivedMessagesOfCurrentUser(String bearer) throws SocialNetworkException {
         String username = jwtUtils.getUsernameFromTokenString(bearer);
         if (!userRepository.existsByUsername(username)){
-            throw new WrongBearerException(bearer);
+            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
         }
         User user = userRepository.findUserByUsername(username);
-        List<Message> messageList = messageRepository.findAllMessagesByToUserId(user.getId());
-        List<MessageDTO> messageDTOList = new ArrayList<>();
+        Set<Message> messageList = messageRepository.findAllMessagesByToUserId(user.getId());
+        Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();
         for (Message message : messageList) {
-            MessageDTO messageDTO = messageMapper.toDto(message);
-            messageDTOList.add(messageDTO);
+            MessageSendRequestDto messageSendRequestDto = messageMapper.toDto(message);
+            messageSendRequestDtoList.add(messageSendRequestDto);
         }
-        return messageDTOList;
+        return messageSendRequestDtoList;
     }
 
-    public List<MessageDTO> findAllSentMessages(Long id) throws UserDoesNotExistsException {
+    public Set<MessageSendRequestDto> findAllSentMessages(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new UserDoesNotExistsException(id);
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
         }
-        List<Message> messageList = messageRepository.findAllMessagesByFromUserId(id);
-        List<MessageDTO> messageDTOList = new ArrayList<>();
+        Set<Message> messageList = messageRepository.findAllMessagesByFromUserId(id);
+        Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();
         for (Message message : messageList) {
-            MessageDTO messageDTO = messageMapper.toDto(message);
-            messageDTOList.add(messageDTO);
+            MessageSendRequestDto messageSendRequestDto = messageMapper.toDto(message);
+            messageSendRequestDtoList.add(messageSendRequestDto);
         }
-        return messageDTOList;
+        return messageSendRequestDtoList;
     }
 
-    public List<MessageDTO> findAllReceivedMessages(Long id) throws UserDoesNotExistsException {
+    public Set<MessageSendRequestDto> findAllReceivedMessages(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new UserDoesNotExistsException(id);
+            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
         }
-        List<Message> messageList = messageRepository.findAllMessagesByToUserId(id);
-        List<MessageDTO> messageDTOList = new ArrayList<>();
+        Set<Message> messageList = messageRepository.findAllMessagesByToUserId(id);
+        Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();
         for (Message message : messageList) {
-            MessageDTO messageDTO = messageMapper.toDto(message);
-            messageDTOList.add(messageDTO);
+            MessageSendRequestDto messageSendRequestDto = messageMapper.toDto(message);
+            messageSendRequestDtoList.add(messageSendRequestDto);
         }
-        return messageDTOList;
+        return messageSendRequestDtoList;
     }
 }

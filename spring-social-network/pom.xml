@@ -11,14 +11,17 @@
 	<groupId>social</groupId>
 	<artifactId>spring-social-network</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
 	<name>spring-social-network</name>
 	<description>Social network rest API</description>
 
 	<properties>
 		<java.version>15</java.version>
+		<start-class>social.network.SpringSocialNetworkApplication</start-class>
 	</properties>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -80,6 +83,7 @@
 			<artifactId>modelmapper</artifactId>
 			<version>2.3.0</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -95,6 +99,11 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

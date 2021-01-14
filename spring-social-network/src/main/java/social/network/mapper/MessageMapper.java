@@ -2,7 +2,7 @@ package social.network.mapper;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import social.network.dto.MessageDTO;
+import social.network.dto.MessageSendRequestDto;
 import social.network.model.Message;
 
 import java.util.Objects;
@@ -15,11 +15,11 @@ public class MessageMapper {
         this.mapper = mapper;
     }
 
-    public Message toEntity(MessageDTO dto) {
+    public Message toEntity(MessageSendRequestDto dto) {
         return Objects.isNull(dto) ? null : mapper.map(dto, Message.class);
     }
 
-    public MessageDTO toDto(Message entity) {
-        return Objects.isNull(entity) ? null : mapper.map(entity, MessageDTO.class);
+    public MessageSendRequestDto toDto(Message entity) {
+        return Objects.isNull(entity) ? null : mapper.map(entity, MessageSendRequestDto.class);
     }
 }

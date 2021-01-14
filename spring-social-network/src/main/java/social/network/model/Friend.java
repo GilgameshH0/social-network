@@ -2,13 +2,11 @@ package social.network.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import javax.persistence.*;
 
 @Getter
 @Setter
-@ToString
 @Entity
 @Table(name = "friend")
 public class Friend {
@@ -24,6 +22,17 @@ public class Friend {
     }
 
     public Friend() {
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Friend friend = (Friend) obj;
+        return friendIdentity.equals(friend.friendIdentity);
     }
 }
