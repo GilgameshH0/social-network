@@ -23,32 +23,25 @@ public class UserPostService {
 
     private final UserPostRepository userPostRepository;
     private final UserRepository userRepository;
-    private final JwtUtils jwtUtils;
     private final UserPostMapper userPostMapper;
 
-    public UserPostService(UserPostRepository userPostRepository, UserRepository userRepository, JwtUtils jwtUtils, UserPostMapper userPostMapper) {
+    public UserPostService(
+            UserPostRepository userPostRepository,
+            UserRepository userRepository,
+            UserPostMapper userPostMapper) {
         this.userPostRepository = userPostRepository;
         this.userRepository = userRepository;
-        this.jwtUtils = jwtUtils;
         this.userPostMapper = userPostMapper;
     }
 
-    public void createPostOnUserWall(String bearer, PostRequestDto postRequestDTO) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void createPostOnUserWall(String username, PostRequestDto postRequestDTO) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         UserPost post = new UserPost(postRequestDTO.getText(), user);
         userPostRepository.save(post);
         log.trace("Post successfully created!{}", post);
     }
 
-    public void updatePostOnUserWall(String bearer, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void updatePostOnUserWall(String username, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!userPostRepository.existsById(postId)) {
             throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
@@ -79,11 +72,7 @@ public class UserPostService {
     }
 
     @Transactional
-    public void removePostFromUserWallCurrentUser(String bearer, Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void removePostFromUserWallCurrentUser(String username, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!userPostRepository.existsById(postId)) {
             throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");

@@ -22,22 +22,20 @@ public class GroupPostService {
     private final GroupPostRepository groupPostRepository;
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
-    private final JwtUtils jwtUtils;
     private final GroupPostMapper groupPostMapper;
 
-    public GroupPostService(GroupPostRepository groupPostRepository, UserRepository userRepository, GroupRepository groupRepository, JwtUtils jwtUtils, GroupPostMapper groupPostMapper) {
+    public GroupPostService(
+            GroupPostRepository groupPostRepository,
+            UserRepository userRepository,
+            GroupRepository groupRepository,
+            GroupPostMapper groupPostMapper) {
         this.groupPostRepository = groupPostRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
-        this.jwtUtils = jwtUtils;
         this.groupPostMapper = groupPostMapper;
     }
 
-    public void createPostOnGroupWall(String bearer, PostRequestDto postRequestDTO, Long groupId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void createPostOnGroupWall(String username, PostRequestDto postRequestDTO, Long groupId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(groupId)) {
             throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + groupId + " does not exists!");
@@ -59,11 +57,7 @@ public class GroupPostService {
         log.trace("Post successfully created!{}", post);
     }
 
-    public void updatePostOnGroupWall(String bearer, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void updatePostOnGroupWall(String username, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(postId)) {
             throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
@@ -102,11 +96,7 @@ public class GroupPostService {
     }
 
     @Transactional
-    public void removePostFromGroupWallCurrentUser(String bearer, Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void removePostFromGroupWallCurrentUser(String username, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupPostRepository.existsById(postId)) {
             throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");

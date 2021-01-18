@@ -7,6 +7,7 @@ import social.network.dto.PostRequestDto;
 import social.network.dto.PostResponseDto;
 import social.network.exception.SocialNetworkException;
 import social.network.model.SuccessfulResponse;
+import social.network.security.jwt.JwtUtils;
 import social.network.service.UserPostService;
 
 import javax.validation.Valid;
@@ -16,22 +17,30 @@ import java.util.Set;
 @RequestMapping("/api/post")
 public class UserPostController {
     private final UserPostService userPostService;
-
-    public UserPostController(UserPostService userPostService) {
+    private final JwtUtils jwtUtils;
+    public UserPostController(UserPostService userPostService, JwtUtils jwtUtils) {
         this.userPostService = userPostService;
+        this.jwtUtils = jwtUtils;
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/create-post-on-user-wall")
-    public ResponseEntity<?> createPostOnUserWall(@RequestHeader("Authorization") String bearer, @RequestBody @Valid PostRequestDto postRequestDTO) throws SocialNetworkException {
-        userPostService.createPostOnUserWall(bearer, postRequestDTO);
+    public ResponseEntity<?> createPostOnUserWall(
+            @RequestHeader("Authorization") String bearer,
+            @RequestBody @Valid PostRequestDto postRequestDTO) throws SocialNetworkException {
+        String username = jwtUtils.getUsernameFromTokenString(bearer);
+        userPostService.createPostOnUserWall(username, postRequestDTO);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully created!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/update-post-on-user-wall/{postId}")
-    public ResponseEntity<?> updatePostOnUserWall(@RequestHeader("Authorization") String bearer, @RequestBody @Valid PostRequestDto postRequestDTO, @PathVariable("postId") Long postId) throws SocialNetworkException {
-        userPostService.updatePostOnUserWall(bearer, postRequestDTO, postId);
+    public ResponseEntity<?> updatePostOnUserWall(
+            @RequestHeader("Authorization") String bearer,
+            @RequestBody @Valid PostRequestDto postRequestDTO,
+            @PathVariable("postId") Long postId) throws SocialNetworkException {
+        String username = jwtUtils.getUsernameFromTokenString(bearer);
+        userPostService.updatePostOnUserWall(username, postRequestDTO, postId);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully updated!"));
     }
 
@@ -47,8 +56,11 @@ public class UserPostController {
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove-post-on-user-wall/{postId}")
-    public ResponseEntity<?> removePostFromUserWallCurrentUser(@RequestHeader("Authorization") String bearer, @PathVariable("postId") Long postId) throws SocialNetworkException {
-        userPostService.removePostFromUserWallCurrentUser(bearer, postId);
+    public ResponseEntity<?> removePostFromUserWallCurrentUser(
+            @RequestHeader("Authorization") String bearer,
+            @PathVariable("postId") Long postId) throws SocialNetworkException {
+        String username = jwtUtils.getUsernameFromTokenString(bearer);
+        userPostService.removePostFromUserWallCurrentUser(username, postId);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully removed!"));
     }
 

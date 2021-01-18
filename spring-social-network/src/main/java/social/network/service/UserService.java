@@ -89,11 +89,7 @@ public class UserService {
         return userMapper.toDto(userRepository.findUserById(id));
     }
 
-    public void updateCurrentUser(String bearer, UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void updateCurrentUser(String username, UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         updateUserInRepository(userSignUpAndUpdateRequestDto, user);
         log.trace(username + " successfully updated his/her account!");
@@ -109,11 +105,7 @@ public class UserService {
     }
 
     @Transactional
-    public void removeCurrentUser(String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void removeCurrentUser(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         userPostRepository.removeAllByOwner(user);
         log.trace("All posts from user with username: " + username + " successfully removed!");

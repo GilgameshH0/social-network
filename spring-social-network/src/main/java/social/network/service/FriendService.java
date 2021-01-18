@@ -20,20 +20,14 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final JwtUtils jwtUtils;
 
-    public FriendService(FriendRepository friendRepository, UserRepository userRepository, UserMapper userMapper, JwtUtils jwtUtils) {
+    public FriendService(FriendRepository friendRepository, UserRepository userRepository, UserMapper userMapper) {
         this.friendRepository = friendRepository;
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.jwtUtils = jwtUtils;
     }
 
-    public void sendFriendRequest(String bearer, Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void sendFriendRequest(String username, Long id) throws SocialNetworkException {
         User firstUser = userRepository.findUserByUsername(username);
         if (!userRepository.existsById(id)) {
             throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
@@ -56,11 +50,7 @@ public class FriendService {
     }
 
     @Transactional
-    public void sendRequestToRemoveFromFriendList(String bearer, Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void sendRequestToRemoveFromFriendList(String username, Long id) throws SocialNetworkException {
         User firstUser = userRepository.findUserByUsername(username);
         if (!userRepository.existsById(id)) {
             throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
@@ -77,20 +67,12 @@ public class FriendService {
         log.trace("Request to remove from friend list sent to user with id:" + id + " !");
     }
 
-    public Set<UserGetResponseDto> findAllFriends(String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public Set<UserGetResponseDto> findAllFriends(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         return getFriendList(user);
     }
 
-    public Set<UserGetResponseDto> findAllUserFriends(String bearer, Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)) {
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public Set<UserGetResponseDto> findAllUserFriends(String username, Long id) throws SocialNetworkException {
         User user = userRepository.findUserById(id);
         return getFriendList(user);
     }

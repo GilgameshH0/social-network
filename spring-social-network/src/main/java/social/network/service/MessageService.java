@@ -32,11 +32,7 @@ public class MessageService {
         this.jwtUtils = jwtUtils;
     }
 
-    public void sendMessage(String bearer, MessageSendRequestDto messageSendRequestDto) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)){
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public void sendMessage(String username, MessageSendRequestDto messageSendRequestDto) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         Message message = messageMapper.toEntity(messageSendRequestDto);
         message.setFromUser(user);
@@ -44,11 +40,7 @@ public class MessageService {
         log.trace("message sent! {}", message);
     }
 
-    public Set<MessageSendRequestDto> findAllSentMessagesOfCurrentUser(String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)){
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public Set<MessageSendRequestDto> findAllSentMessagesOfCurrentUser(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         Set<Message> messageList = messageRepository.findAllMessagesByFromUserId(user.getId());
         Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();
@@ -59,11 +51,7 @@ public class MessageService {
         return messageSendRequestDtoList;
     }
 
-    public Set<MessageSendRequestDto> findAllReceivedMessagesOfCurrentUser(String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        if (!userRepository.existsByUsername(username)){
-            throw new SocialNetworkException(ErrorCode.WrongBearer, "Bearer " + bearer + "is wrong!");
-        }
+    public Set<MessageSendRequestDto> findAllReceivedMessagesOfCurrentUser(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         Set<Message> messageList = messageRepository.findAllMessagesByToUserId(user.getId());
         Set<MessageSendRequestDto> messageSendRequestDtoList = new HashSet<>();

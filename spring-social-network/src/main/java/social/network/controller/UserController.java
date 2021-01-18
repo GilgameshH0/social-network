@@ -8,6 +8,7 @@ import social.network.dto.UserLogInRequestDto;
 import social.network.dto.UserSignUpAndUpdateRequestDto;
 import social.network.exception.SocialNetworkException;
 import social.network.model.SuccessfulResponse;
+import social.network.security.jwt.JwtUtils;
 import social.network.service.UserService;
 
 import javax.validation.Valid;
@@ -18,9 +19,10 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
+    private final JwtUtils jwtUtils;
+    public UserController(UserService userService, JwtUtils jwtUtils) {
         this.userService = userService;
+        this.jwtUtils = jwtUtils;
     }
 
     @PostMapping("/signup")
@@ -31,14 +33,12 @@ public class UserController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(
-            @RequestBody @Valid UserLogInRequestDto userLogInRequestDto) throws SocialNetworkException {
+    public ResponseEntity<?> authenticateUser(@RequestBody @Valid UserLogInRequestDto userLogInRequestDto) throws SocialNetworkException {
         return ResponseEntity.ok(userService.authenticateUser(userLogInRequestDto));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findUser(
-            @PathVariable("id") Long id) throws SocialNetworkException {
+    public ResponseEntity<?> findUser(@PathVariable("id") Long id) throws SocialNetworkException {
         return ResponseEntity.ok(userService.findUser(id));
     }
 
@@ -47,8 +47,8 @@ public class UserController {
     public ResponseEntity<?> updateCurrentUser(
             @RequestHeader("Authorization") String bearer,
             @RequestBody UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
-        System.out.println("hello");
-        userService.updateCurrentUser(bearer, userSignUpAndUpdateRequestDto);
+        String username = jwtUtils.getUsernameFromTokenString(bearer);
+        userService.updateCurrentUser(username, userSignUpAndUpdateRequestDto);
         return ResponseEntity.ok(new SuccessfulResponse("Account successfully updated!"));
     }
 
@@ -63,9 +63,9 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove-current-user")
-    public ResponseEntity<?> removeCurrentUser(
-            @RequestHeader("Authorization") String bearer) throws SocialNetworkException {
-        userService.removeCurrentUser(bearer);
+    public ResponseEntity<?> removeCurrentUser(@RequestHeader("Authorization") String bearer) throws SocialNetworkException {
+        String username = jwtUtils.getUsernameFromTokenString(bearer);
+        userService.removeCurrentUser(username);
         return ResponseEntity.ok(new SuccessfulResponse("Account is successfully deleted"));
     }
 
