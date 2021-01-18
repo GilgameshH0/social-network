@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -123,33 +124,21 @@ public class UserControllerTest {
     @Test
     @WithMockUser(roles = "USER")
     public void updateCurrentUserTest() throws Exception {
-
-        UserSignUpAndUpdateRequestDto registeredUserDTO = new UserSignUpAndUpdateRequestDto();
-        registeredUserDTO.setUsername("newTestUsername");
-        registeredUserDTO.setPassword("testPassword");
-        registeredUserDTO.setEmail("testEmail@mail.com");
-        registeredUserDTO.setGender(Gender.MAN);
-        when(userRepository.existsByUsername(any())).thenAnswer(a -> false);
-
-
-        MvcResult mvcResult = mockMvc
-                .perform(post("/api/user/signin")
-                        .content(objectMapper.writeValueAsString(registeredUserDTO))
-                        .contentType(MediaType.APPLICATION_JSON)).andReturn();
-
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        System.out.println();
+        UserSignUpAndUpdateRequestDto updatedUser = new UserSignUpAndUpdateRequestDto();
+        updatedUser.setUsername("newTestUsername");
+        updatedUser.setPassword("testPassword");
+        updatedUser.setEmail("testEmail@mail.com");
+        updatedUser.setGender(Gender.MAN);
 //        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(updateUserDTO.getUsername(), updateUserDTO.getPassword()));
 //        SecurityContextHolder.getContext().setAuthentication(authentication);
 //        String jwt = jwtUtils.generateJwtToken(authentication);
-//        mockMvc
-//                .perform(
-//                        put("/api/user/update-current-user")
-//                                .contentType(MediaType.APPLICATION_JSON)
-////                                .header(HttpHeaders.AUTHORIZATION, jwt)
-//                                .content(objectMapper.writeValueAsString(updateUserDTO)))
-//                .andDo(print())
-//                .andExpect(status().isOk());
+        mockMvc
+                .perform(
+                        put("/api/user/update-current-user")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updatedUser)))
+                .andDo(print())
+                .andExpect(status().isOk());
     }
 
     @Test
