@@ -31,6 +31,7 @@ public class User {
     private String email;
     @ManyToMany(fetch = FetchType.LAZY)
     private Set<Role> roles = new HashSet<>();
+
     public User() {
     }
 

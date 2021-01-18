@@ -7,5 +7,6 @@ public enum ErrorCode {
     WrongBearer,
     GroupDoesNotExist,
     YouAreNotOwner,
-    PostDoesNotExists
+    PostDoesNotExists,
+    CountryDoesNotExists
 }

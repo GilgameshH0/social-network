@@ -34,7 +34,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         LocalDateTime.now());
                 return new ResponseEntity<>(apiException, status);
             }
-            case UserDoesNotExists, GroupDoesNotExist, PostDoesNotExists -> {
+            case UserDoesNotExists, GroupDoesNotExist, PostDoesNotExists, CountryDoesNotExists -> {
                 HttpStatus status = HttpStatus.NOT_FOUND;
                 ApiException apiException = new ApiException(
                         socialNetworkException.getMessage(),

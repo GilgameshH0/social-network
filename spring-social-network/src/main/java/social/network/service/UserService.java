@@ -46,7 +46,6 @@ public class UserService {
     }
 
     public void registerUser(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
-
         if (userRepository.existsByUsername(userSignUpAndUpdateRequestDto.getUsername()) || userRepository.existsByEmail(userSignUpAndUpdateRequestDto.getEmail())) {
             throw new SocialNetworkException(ErrorCode.UsernameOrEmailAlreadyInUse, "Username or email are already in use!");
         }
@@ -134,7 +133,10 @@ public class UserService {
         log.trace("User with id:" + id + " deleted successfully!");
     }
 
-    public Set<UserGetResponseDto> findAllUserByCountry(String country) {
+    public Set<UserGetResponseDto> findAllUserByCountry(String country) throws SocialNetworkException {
+        if (!userRepository.existsByCountry(country)) {
+            throw new SocialNetworkException(ErrorCode.CountryDoesNotExists, "Country with name:" + country + " does not exists!");
+        }
         Set<User> userList = userRepository.findAllByCountry(country);
         Set<UserGetResponseDto> userGetResponseDtoList = new HashSet<>();
         for (User user : userList) {
@@ -144,9 +146,12 @@ public class UserService {
         return userGetResponseDtoList;
     }
 
-    private void updateUserInRepository(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, User user) {
+    private void updateUserInRepository(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, User user) throws SocialNetworkException {
+        if (userRepository.existsByUsername(userSignUpAndUpdateRequestDto.getUsername()) || userRepository.existsByEmail(userSignUpAndUpdateRequestDto.getEmail())){
+            throw new SocialNetworkException(ErrorCode.UsernameOrEmailAlreadyInUse, "Username or email are already in use!");
+        }
         user.setUsername(userSignUpAndUpdateRequestDto.getUsername());
-        user.setPassword(userSignUpAndUpdateRequestDto.getPassword());
+        user.setPassword(encoder.encode(userSignUpAndUpdateRequestDto.getPassword()));
         user.setName(userSignUpAndUpdateRequestDto.getName());
         user.setSurname(userSignUpAndUpdateRequestDto.getSurname());
         user.setPatronymic(userSignUpAndUpdateRequestDto.getPatronymic());

@@ -14,32 +14,35 @@ import java.time.LocalDate;
 @Setter
 
 public class UserSignUpAndUpdateRequestDto {
-    @NotNull(message = "Please, enter your username!")
-    @Size(min = 4, max = 20)
     private String username;
-    @NotNull(message = "Please, enter your password!")
     @Size(max = 120)
     private String password;
-    @NotNull(message = "Please, enter your name!")
     @Size(max = 20)
     private String name;
-    @NotNull(message = "Please, enter your surname!")
     @Size(max = 40)
     private String surname;
-    @NotNull(message = "Please, enter your patronymic!")
     @Size(max = 40)
     private String patronymic;
-    @NotNull(message = "Please, enter your gender!")
     private Gender gender;
-    @NotNull(message = "Please, enter your birthdate!")
     private LocalDate birthdate;
-    @NotNull(message = "Please, enter your country!")
     private String country;
-    @Size(max = 50)
-    @NotNull(message = "Please, enter your email!")
-    @Email
     private String email;
 
     public UserSignUpAndUpdateRequestDto() {
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        UserSignUpAndUpdateRequestDto user = (UserSignUpAndUpdateRequestDto) obj;
+        if (!username.equals(user.username)) {
+            return false;
+        }
+        return password.equals(user.password);
     }
 }
