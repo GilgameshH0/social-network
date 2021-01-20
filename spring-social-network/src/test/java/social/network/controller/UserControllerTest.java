@@ -8,23 +8,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import social.network.dto.UserGetResponseDto;
 import social.network.dto.UserLogInRequestDto;
 import social.network.dto.UserSignUpAndUpdateRequestDto;
 import social.network.exception.SocialNetworkException;
-import social.network.mapper.UserMapper;
 import social.network.model.ErrorCode;
 import social.network.model.Gender;
-import social.network.repository.UserRepository;
-import social.network.security.jwt.JwtUtils;
 import social.network.service.UserService;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -40,27 +34,19 @@ public class UserControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private UserService userService;
-    @MockBean
-    private UserRepository userRepository;
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private UserMapper userMapper;
 
     @Test
     public void registerTest() throws Exception {
-        UserSignUpAndUpdateRequestDto userDTO = new UserSignUpAndUpdateRequestDto();
-        userDTO.setUsername("testUsername");
-        userDTO.setPassword("testPassword");
-        userDTO.setEmail("testEmail");
-        userDTO.setGender(Gender.MAN);
+        UserSignUpAndUpdateRequestDto userDto = new UserSignUpAndUpdateRequestDto();
+        userDto.setUsername("testUsername");
+        userDto.setPassword("testPassword");
+        userDto.setEmail("testEmail");
+        userDto.setGender(Gender.MAN);
         mockMvc
                 .perform(post("/api/user/signup")
-                        .content(objectMapper.writeValueAsString(userDTO))
+                        .content(objectMapper.writeValueAsString(userDto))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -80,11 +66,11 @@ public class UserControllerTest {
 
     @Test
     public void LoginTest() throws Exception {
-        UserLogInRequestDto userDTO = new UserLogInRequestDto();
-        userDTO.setUsername("testUsername");
-        userDTO.setPassword("testPassword");
+        UserLogInRequestDto userDto = new UserLogInRequestDto();
+        userDto.setUsername("testUsername");
+        userDto.setPassword("testPassword");
         mockMvc
-                .perform(post("/api/user/signin").content(objectMapper.writeValueAsString(userDTO)).contentType(MediaType.APPLICATION_JSON))
+                .perform(post("/api/user/signin").content(objectMapper.writeValueAsString(userDto)).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
@@ -93,19 +79,21 @@ public class UserControllerTest {
         UserLogInRequestDto notExistsUser = new UserLogInRequestDto();
         notExistsUser.setUsername("testUsername");
         notExistsUser.setPassword("testPassword");
-        doThrow(new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + notExistsUser.getUsername() + " does not exists!")).when(userService).authenticateUser(notExistsUser);
+        doThrow(new SocialNetworkException(ErrorCode.NotExists, "User with id:" + notExistsUser.getUsername() + " does not exists!")).when(userService).authenticateUser(notExistsUser);
         mockMvc
-                .perform(post("/api/user/signin").content(objectMapper.writeValueAsString(notExistsUser)).contentType(MediaType.APPLICATION_JSON))
+                .perform(post("/api/user/signin")
+                        .content(objectMapper.writeValueAsString(notExistsUser))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void findUserTest() throws Exception {
         long userId = 1L;
-        UserGetResponseDto userDTO = new UserGetResponseDto();
-        userDTO.setId(userId);
-        userDTO.setUsername("testUsername");
-        when(userService.findUser(userId)).thenReturn(userDTO);
+        UserGetResponseDto userDto = new UserGetResponseDto();
+        userDto.setId(userId);
+        userDto.setUsername("testUsername");
+        when(userService.findUser(userId)).thenReturn(userDto);
         mockMvc
                 .perform(get("/api/user/" + userId))
                 .andExpect(status().isOk());
@@ -114,7 +102,7 @@ public class UserControllerTest {
     @Test
     public void findUserTestFails() throws Exception {
         long userId = 999L;
-        when(userService.findUser(userId)).thenThrow(new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userId + " does not exists!"));
+        when(userService.findUser(userId)).thenThrow(new SocialNetworkException(ErrorCode.NotExists, "User with id:" + userId + " does not exists!"));
         mockMvc
                 .perform(get("/api/user/" + userId))
                 .andExpect(status().isNotFound());
@@ -122,42 +110,40 @@ public class UserControllerTest {
 
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "root", roles = {"USER"})
     public void updateCurrentUserTest() throws Exception {
-        UserSignUpAndUpdateRequestDto updatedUser = new UserSignUpAndUpdateRequestDto();
-        updatedUser.setUsername("newTestUsername");
-        updatedUser.setPassword("testPassword");
-        updatedUser.setEmail("testEmail@mail.com");
-        updatedUser.setGender(Gender.MAN);
-//        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(updateUserDTO.getUsername(), updateUserDTO.getPassword()));
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//        String jwt = jwtUtils.generateJwtToken(authentication);
+        UserSignUpAndUpdateRequestDto userDto = new UserSignUpAndUpdateRequestDto();
+        userDto.setUsername("newTestUsername");
+        userDto.setPassword("testPassword");
+        userDto.setEmail("testEmail@mail.com");
+        userDto.setGender(Gender.MAN);
         mockMvc
                 .perform(
                         put("/api/user/update-current-user")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(updatedUser)))
+                                .content(objectMapper.writeValueAsString(userDto)))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "MODERATOR")
+    @WithMockUser(username = "root", roles = {"MODERATOR"})
     public void updateUserTest() throws Exception {
-        long userId = 1L;
-        UserSignUpAndUpdateRequestDto userDTO = new UserSignUpAndUpdateRequestDto();
-        userDTO.setUsername("newTestUsername");
-        userDTO.setPassword("testPassword");
-        userDTO.setEmail("testEmail");
-        userDTO.setGender(Gender.MAN);
+        long userId = 2L;
+        UserSignUpAndUpdateRequestDto userDto = new UserSignUpAndUpdateRequestDto();
+        userDto.setUsername("newTestUsername");
+        userDto.setPassword("testPassword");
+        userDto.setEmail("testEmail");
+        userDto.setGender(Gender.MAN);
         mockMvc
                 .perform(put("/api/user/update-user/" + userId)
-                        .content(objectMapper.writeValueAsString(userDTO)).contentType(MediaType.APPLICATION_JSON))
+                        .content(objectMapper.writeValueAsString(userDto))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "MODERATOR")
+    @WithMockUser(username = "root", roles = {"MODERATOR"})
     public void updateUserTestFails() throws Exception {
         long userId = 999L;
         UserSignUpAndUpdateRequestDto userDTO = new UserSignUpAndUpdateRequestDto();
@@ -165,14 +151,17 @@ public class UserControllerTest {
         userDTO.setPassword("testPassword");
         userDTO.setEmail("testEmail");
         userDTO.setGender(Gender.MAN);
-        doThrow(new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userId + " does not exists!")).when(userService).updateUser(userDTO, userId);
+        doThrow(new SocialNetworkException(ErrorCode.NotExists, "User with id:" + userId + " does not exists!"))
+                .when(userService).updateUser(userDTO, userId);
         mockMvc
-                .perform(put("/api/user/update-user" + userId).content(objectMapper.writeValueAsString(userDTO)).contentType(MediaType.APPLICATION_JSON))
+                .perform(put("/api/user/update-user/" + userId)
+                        .content(objectMapper.writeValueAsString(userDTO))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "root", roles = {"USER"})
     public void removeCurrentUserTest() throws Exception {
         mockMvc
                 .perform(delete("/api/user/remove-current-user"))
@@ -180,21 +169,21 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(roles = "MODERATOR")
+    @WithMockUser(username = "root", roles = {"MODERATOR"})
     public void removeUserTest() throws Exception {
         long userId = 1L;
         mockMvc
-                .perform(delete("/api/user/remove-user" + userId))
+                .perform(delete("/api/user/remove-user/" + userId))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "MODERATOR")
+    @WithMockUser(username = "root", roles = {"MODERATOR"})
     public void removeUserTestFails() throws Exception {
         long userId = 999L;
-        doThrow(new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userId + " does not exists!")).when(userService).removeUser(userId);
+        doThrow(new SocialNetworkException(ErrorCode.NotExists, "User with id:" + userId + " does not exists!")).when(userService).removeUser(userId);
         mockMvc
-                .perform(delete("/api/user/remove-user" + userId))
+                .perform(delete("/api/user/remove-user/" + userId))
                 .andExpect(status().isNotFound());
     }
 
@@ -209,7 +198,7 @@ public class UserControllerTest {
     @Test
     public void findAllUserByCountryTestFails() throws Exception {
         String country = "Spain";
-        when(userService.findAllUserByCountry(country)).thenThrow(new SocialNetworkException(ErrorCode.CountryDoesNotExists, "Country with name:" + country + " does not exists!"));
+        when(userService.findAllUserByCountry(country)).thenThrow(new SocialNetworkException(ErrorCode.NotExists, "Country with name:" + country + " does not exists!"));
         mockMvc
                 .perform(get("/api/user/find-by-country/" + country))
                 .andExpect(status().isNotFound());

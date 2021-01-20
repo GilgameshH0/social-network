@@ -11,7 +11,6 @@ import social.network.model.User;
 import social.network.model.UserPost;
 import social.network.repository.UserPostRepository;
 import social.network.repository.UserRepository;
-import social.network.security.jwt.JwtUtils;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
@@ -34,7 +33,7 @@ public class UserPostService {
         this.userPostMapper = userPostMapper;
     }
 
-    public void createPostOnUserWall(String username, PostRequestDto postRequestDTO) throws SocialNetworkException {
+    public void createPostOnUserWall(String username, PostRequestDto postRequestDTO) {
         User user = userRepository.findUserByUsername(username);
         UserPost post = new UserPost(postRequestDTO.getText(), user);
         userPostRepository.save(post);
@@ -44,11 +43,11 @@ public class UserPostService {
     public void updatePostOnUserWall(String username, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!userPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         UserPost post = userPostRepository.findUserPostById(postId);
         if (user != post.getOwner()) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "you are not owner post with id:" + postId + "!");
+            throw new SocialNetworkException(ErrorCode.NotOwner, "you are not owner post with id:" + postId + "!");
         }
         post.setText(postRequestDTO.getText());
         userPostRepository.save(post);
@@ -57,7 +56,7 @@ public class UserPostService {
 
     public PostResponseDto findPostOnUserWall(Long postId) throws SocialNetworkException {
         if (!userPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         UserPost post = userPostRepository.findUserPostById(postId);
         return userPostMapper.toDto(post);
@@ -65,21 +64,25 @@ public class UserPostService {
 
     public Set<PostResponseDto> findAllPostsOnUserWall(Long userId) throws SocialNetworkException {
         if (!userRepository.existsById(userId)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + userId + " does not exists!");
         }
         User user = userRepository.findUserById(userId);
-        return findUserPostList(user);
+        Set<PostResponseDto> postList = findUserPostList(user);
+        if (postList.size() == 0) {
+            throw new SocialNetworkException(ErrorCode.NotExists, "Posts from group with id:" + userId + " does not exists!");
+        }
+        return postList;
     }
 
     @Transactional
     public void removePostFromUserWallCurrentUser(String username, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!userPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         UserPost post = userPostRepository.findUserPostById(postId);
         if (user != post.getOwner()) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "you are not owner post with id:" + postId + "!");
+            throw new SocialNetworkException(ErrorCode.NotOwner, "you are not owner post with id:" + postId + "!");
         }
         userPostRepository.removeById(postId);
         log.trace("Post with id: " + postId + " successfully removed!");
@@ -87,7 +90,7 @@ public class UserPostService {
 
     public void removePostFromUserWall(Long postId) throws SocialNetworkException {
         if (!userPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         userPostRepository.removeById(postId);
         log.trace("Post with id: " + postId + " successfully removed!");

@@ -8,10 +8,10 @@ import social.network.dto.UserLogInRequestDto;
 import social.network.dto.UserSignUpAndUpdateRequestDto;
 import social.network.exception.SocialNetworkException;
 import social.network.model.SuccessfulResponse;
-import social.network.security.jwt.JwtUtils;
 import social.network.service.UserService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.Set;
 
 @RestController
@@ -19,10 +19,8 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
-    private final JwtUtils jwtUtils;
-    public UserController(UserService userService, JwtUtils jwtUtils) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.jwtUtils = jwtUtils;
     }
 
     @PostMapping("/signup")
@@ -45,10 +43,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/update-current-user")
     public ResponseEntity<?> updateCurrentUser(
-            @RequestHeader("Authorization") String bearer,
-            @RequestBody UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        userService.updateCurrentUser(username, userSignUpAndUpdateRequestDto);
+            @RequestBody UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto,
+            Principal principal) throws SocialNetworkException {
+        userService.updateCurrentUser(principal.getName(), userSignUpAndUpdateRequestDto);
         return ResponseEntity.ok(new SuccessfulResponse("Account successfully updated!"));
     }
 
@@ -63,9 +60,8 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove-current-user")
-    public ResponseEntity<?> removeCurrentUser(@RequestHeader("Authorization") String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        userService.removeCurrentUser(username);
+    public ResponseEntity<?> removeCurrentUser(Principal principal) throws SocialNetworkException {
+        userService.removeCurrentUser(principal.getName());
         return ResponseEntity.ok(new SuccessfulResponse("Account is successfully deleted"));
     }
 

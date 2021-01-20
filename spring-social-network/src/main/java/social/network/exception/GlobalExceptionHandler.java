@@ -16,7 +16,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Object> socialNetworkExceptionHandler(SocialNetworkException socialNetworkException) {
 
         switch (socialNetworkException.getErrorCode()) {
-            case UsernameOrEmailAlreadyInUse, AlreadySentFriendRequest -> {
+            case UsernameOrEmailAlreadyInUse, AlreadySentFriendRequest, AlreadySubscribed, NotSubscribed, NotYourFriend -> {
                 HttpStatus status = HttpStatus.CONFLICT;
                 ApiException apiException = new ApiException(
                         socialNetworkException.getMessage(),
@@ -25,16 +25,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         LocalDateTime.now());
                 return new ResponseEntity<>(apiException, status);
             }
-            case WrongBearer -> {
-                HttpStatus status = HttpStatus.UNAUTHORIZED;
-                ApiException apiException = new ApiException(
-                        socialNetworkException.getMessage(),
-                        socialNetworkException,
-                        status,
-                        LocalDateTime.now());
-                return new ResponseEntity<>(apiException, status);
-            }
-            case UserDoesNotExists, GroupDoesNotExist, PostDoesNotExists, CountryDoesNotExists -> {
+            case NotExists -> {
                 HttpStatus status = HttpStatus.NOT_FOUND;
                 ApiException apiException = new ApiException(
                         socialNetworkException.getMessage(),
@@ -43,7 +34,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         LocalDateTime.now());
                 return new ResponseEntity<>(apiException, status);
             }
-            case YouAreNotOwner -> {
+            case NotOwner -> {
                 HttpStatus status = HttpStatus.FORBIDDEN;
                 ApiException apiException = new ApiException(
                         socialNetworkException.getMessage(),

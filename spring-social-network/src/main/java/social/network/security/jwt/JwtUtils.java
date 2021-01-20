@@ -4,8 +4,8 @@ import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import social.network.security.service.UserDetailsImpl;
 
 import java.util.Date;
 
@@ -20,7 +20,7 @@ public class JwtUtils {
     private int jwtExpirationMs;
 
     public String generateJwtToken(Authentication authentication) {
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
+        UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
         return Jwts.builder()
                 .setSubject((userPrincipal.getUsername()))
                 .setIssuedAt(new Date())
@@ -49,12 +49,5 @@ public class JwtUtils {
             log.error("Invalid JWT signature: {}", e.getMessage());
         }
         return false;
-    }
-
-    public String getUsernameFromTokenString(String bearer) {
-        String withoutSpace = bearer.replace(" ", "");
-        int indexOfBearer = withoutSpace.indexOf("bearer") + 7;
-        String token = withoutSpace.substring(indexOfBearer);
-        return getUserNameFromJwtToken(token);
     }
 }

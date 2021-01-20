@@ -12,7 +12,6 @@ import social.network.model.User;
 import social.network.repository.GroupPostRepository;
 import social.network.repository.GroupRepository;
 import social.network.repository.UserRepository;
-import social.network.security.jwt.JwtUtils;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ public class GroupService {
     public void removeGroupCurrentUser(String username, Long id) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsByIdAndOwner(id, user)) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "You are not owner of group with id: " + id);
+            throw new SocialNetworkException(ErrorCode.NotOwner, "You are not owner of group with id: " + id);
         }
         Group group = groupRepository.findGroupById(id);
         groupPostRepository.removeAllByOwner(group);
@@ -60,7 +59,7 @@ public class GroupService {
     @Transactional
     public void removeGroup(Long id) throws SocialNetworkException {
         if (!groupRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Group with id: " + id + " does not exists!");
         }
         Group group = groupRepository.findGroupById(id);
         groupPostRepository.removeAllByOwner(group);
@@ -72,10 +71,13 @@ public class GroupService {
     public void joinGroup(String username, Long id) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Group with id: " + id + " does not exists!");
         }
         Group group = groupRepository.findGroupById(id);
         Set<User> subscribes = group.getSubscribers();
+        if (subscribes.contains(user)) {
+            throw new SocialNetworkException(ErrorCode.AlreadySubscribed, "You already joined to group with id:" + id + "!");
+        }
         subscribes.add(user);
         group.setSubscribers(subscribes);
         groupRepository.save(group);
@@ -84,10 +86,13 @@ public class GroupService {
     public void leaveGroup(String username, Long id) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Group with id: " + id + " does not exists!");
         }
         Group group = groupRepository.findGroupById(id);
         Set<User> subscribes = group.getSubscribers();
+        if (!subscribes.contains(user)) {
+            throw new SocialNetworkException(ErrorCode.NotSubscribed, "You dont subscribed to group with id: " + id + " !");
+        }
         subscribes.remove(user);
         group.setSubscribers(subscribes);
         groupRepository.save(group);
@@ -95,15 +100,23 @@ public class GroupService {
 
     public Set<GroupResponseDto> findGroupsCurrentUser(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
-        return findGroupList(user);
+        Set<GroupResponseDto> groupList = findGroupList(user);
+        if (groupList.size() == 0) {
+            throw new SocialNetworkException(ErrorCode.NotExists, "You are not subscribed on any group!");
+        }
+        return groupList;
     }
 
     public Set<GroupResponseDto> findGroups(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         User user = userRepository.findUserById(id);
-        return findGroupList(user);
+        Set<GroupResponseDto> groupList = findGroupList(user);
+        if (groupList.size() == 0) {
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not subscribed on any group!");
+        }
+        return groupList;
     }
 
     private Set<GroupResponseDto> findGroupList(User user) {

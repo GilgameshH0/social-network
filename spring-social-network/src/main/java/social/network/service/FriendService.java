@@ -30,13 +30,13 @@ public class FriendService {
     public void sendFriendRequest(String username, Long id) throws SocialNetworkException {
         User firstUser = userRepository.findUserByUsername(username);
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         User secondUser = userRepository.findUserById(id);
-        if (friendRepository.existsFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(firstUser, secondUser)) {
+        if (friendRepository.existsByUsers(firstUser, secondUser)) {
             throw new SocialNetworkException(ErrorCode.AlreadySentFriendRequest, "you are already sent friend request to user with id:" + id);
         }
-        if (friendRepository.existsFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(secondUser, firstUser)) {
+        if (friendRepository.existsByUsers(secondUser, firstUser)) {
             Friend firstFriend = new Friend(new FriendIdentity(firstUser, secondUser), FriendStatus.CONFIRMED);
             friendRepository.save(firstFriend);
             Friend secondFriend = new Friend(new FriendIdentity(secondUser, firstUser), FriendStatus.CONFIRMED);
@@ -53,14 +53,17 @@ public class FriendService {
     public void sendRequestToRemoveFromFriendList(String username, Long id) throws SocialNetworkException {
         User firstUser = userRepository.findUserByUsername(username);
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         User secondUser = userRepository.findUserById(id);
-        if (friendRepository.findFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(firstUser, secondUser).getFriendStatus() == FriendStatus.REQUESTED) {
-            friendRepository.removeFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(firstUser, secondUser);
+        if (!friendRepository.existsByUsers(firstUser, secondUser)) {
+            throw new SocialNetworkException(ErrorCode.NotYourFriend, "User with id:" + id + " is not your Friend!");
+        }
+        if (friendRepository.findFriendByUsers(firstUser, secondUser).getFriendStatus() == FriendStatus.REQUESTED) {
+            friendRepository.removeFriendByUsers(firstUser, secondUser);
         } else {
-            friendRepository.removeFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(firstUser, secondUser);
-            Friend friend = friendRepository.findFriendByFriendIdentity_FirstUserAndFriendIdentity_SecondUser(secondUser, firstUser);
+            friendRepository.removeFriendByUsers(firstUser, secondUser);
+            Friend friend = friendRepository.findFriendByUsers(secondUser, firstUser);
             friend.setFriendStatus(FriendStatus.REQUESTED);
             friendRepository.save(friend);
         }
@@ -69,16 +72,24 @@ public class FriendService {
 
     public Set<UserGetResponseDto> findAllFriends(String username) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
-        return getFriendList(user);
+        Set<UserGetResponseDto> friendList = findFriendList(user);
+        if (friendList.size() == 0){
+            throw new SocialNetworkException(ErrorCode.NotExists, "You have not friends!");
+        }
+        return friendList;
     }
 
-    public Set<UserGetResponseDto> findAllUserFriends(String username, Long id) throws SocialNetworkException {
+    public Set<UserGetResponseDto> findAllUserFriends(Long id) throws SocialNetworkException {
         User user = userRepository.findUserById(id);
-        return getFriendList(user);
+        Set<UserGetResponseDto> friendList = findFriendList(user);
+        if (friendList.size() == 0){
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id: " + id + " does not have friends!");
+        }
+        return friendList;
     }
 
-    private Set<UserGetResponseDto> getFriendList(User user) {
-        Set<Friend> friendList = friendRepository.findAllByFriendIdentity_FirstUser(user);
+    private Set<UserGetResponseDto> findFriendList(User user) {
+        Set<Friend> friendList = friendRepository.findAllFriends(user);
         Set<UserGetResponseDto> userGetResponseDtoList = new HashSet<>();
         for (Friend friend : friendList) {
             UserGetResponseDto userGetResponseDto = userMapper.toDto(friend.getFriendIdentity().getSecondUser());

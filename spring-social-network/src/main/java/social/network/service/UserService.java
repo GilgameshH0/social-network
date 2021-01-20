@@ -5,6 +5,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import social.network.dto.UserGetResponseDto;
@@ -17,7 +18,6 @@ import social.network.repository.RoleRepository;
 import social.network.repository.UserPostRepository;
 import social.network.repository.UserRepository;
 import social.network.security.jwt.JwtUtils;
-import social.network.security.service.UserDetailsImpl;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
@@ -69,22 +69,18 @@ public class UserService {
 
     public JwtResponse authenticateUser(UserLogInRequestDto userLogInRequestDto) throws SocialNetworkException {
         if (!userRepository.existsByUsername(userLogInRequestDto.getUsername())) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + userLogInRequestDto.getUsername() + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + userLogInRequestDto.getUsername() + " does not exists!");
         }
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userLogInRequestDto.getUsername(), userLogInRequestDto.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         log.trace(userLogInRequestDto.getUsername() + " successfully created token for user " + userLogInRequestDto.getUsername() + "! {}", jwt);
-        return new JwtResponse(jwt,
-                userDetails.getId(),
-                userDetails.getUsername(),
-                userDetails.getEmail());
+        return new JwtResponse(jwt, userDetails.getUsername());
     }
 
     public UserGetResponseDto findUser(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         return userMapper.toDto(userRepository.findUserById(id));
     }
@@ -97,7 +93,7 @@ public class UserService {
 
     public void updateUser(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         User user = userRepository.findUserById(id);
         updateUserInRepository(userSignUpAndUpdateRequestDto, user);
@@ -116,7 +112,7 @@ public class UserService {
     @Transactional
     public void removeUser(Long id) throws SocialNetworkException {
         if (!userRepository.existsById(id)) {
-            throw new SocialNetworkException(ErrorCode.UserDoesNotExists, "User with id:" + id + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "User with id:" + id + " does not exists!");
         }
         User user = userRepository.findUserById(id);
         userPostRepository.removeAllByOwner(user);
@@ -127,7 +123,7 @@ public class UserService {
 
     public Set<UserGetResponseDto> findAllUserByCountry(String country) throws SocialNetworkException {
         if (!userRepository.existsByCountry(country)) {
-            throw new SocialNetworkException(ErrorCode.CountryDoesNotExists, "Country with name:" + country + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Country with name:" + country + " does not exists!");
         }
         Set<User> userList = userRepository.findAllByCountry(country);
         Set<UserGetResponseDto> userGetResponseDtoList = new HashSet<>();
@@ -139,7 +135,7 @@ public class UserService {
     }
 
     private void updateUserInRepository(UserSignUpAndUpdateRequestDto userSignUpAndUpdateRequestDto, User user) throws SocialNetworkException {
-        if (userRepository.existsByUsername(userSignUpAndUpdateRequestDto.getUsername()) || userRepository.existsByEmail(userSignUpAndUpdateRequestDto.getEmail())){
+        if (userRepository.existsByUsername(userSignUpAndUpdateRequestDto.getUsername()) || userRepository.existsByEmail(userSignUpAndUpdateRequestDto.getEmail())) {
             throw new SocialNetworkException(ErrorCode.UsernameOrEmailAlreadyInUse, "Username or email are already in use!");
         }
         user.setUsername(userSignUpAndUpdateRequestDto.getUsername());

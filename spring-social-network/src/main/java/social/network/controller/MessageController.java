@@ -10,6 +10,7 @@ import social.network.security.jwt.JwtUtils;
 import social.network.service.MessageService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.Set;
 
 @RestController
@@ -17,36 +18,31 @@ import java.util.Set;
 public class MessageController {
 
     private final MessageService messageService;
-    private final JwtUtils jwtUtils;
-    public MessageController(MessageService messageService, JwtUtils jwtUtils) {
+    public MessageController(MessageService messageService) {
         this.messageService = messageService;
-        this.jwtUtils = jwtUtils;
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/send-message")
     public ResponseEntity<?> sendMessage(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @RequestBody @Valid MessageSendRequestDto messageSendRequestDto) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        messageService.sendMessage(username, messageSendRequestDto);
+        messageService.sendMessage(principal.getName(), messageSendRequestDto);
         return ResponseEntity.ok(new SuccessfulResponse("message was received!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/find-current-user-sent-messages")
     public Set<MessageSendRequestDto> findAllSentMessagesOfCurrentUser(
-            @RequestHeader("Authorization") String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        return messageService.findAllSentMessagesOfCurrentUser(username);
+            Principal principal) throws SocialNetworkException {
+        return messageService.findAllSentMessagesOfCurrentUser(principal.getName());
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/find-current-user-received-messages")
     public Set<MessageSendRequestDto> findAllReceivedMessagesOfCurrentUser(
-            @RequestHeader("Authorization") String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        return messageService.findAllReceivedMessagesOfCurrentUser(bearer);
+            Principal principal) throws SocialNetworkException {
+        return messageService.findAllReceivedMessagesOfCurrentUser(principal.getName());
     }
 
     @PreAuthorize("hasRole('ADMIN')")

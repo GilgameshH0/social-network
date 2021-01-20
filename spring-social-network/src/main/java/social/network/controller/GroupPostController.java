@@ -11,6 +11,7 @@ import social.network.security.jwt.JwtUtils;
 import social.network.service.GroupPostService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.Set;
 
 @RestController
@@ -18,31 +19,28 @@ import java.util.Set;
 public class GroupPostController {
 
     private final GroupPostService groupPostService;
-    private final JwtUtils jwtUtils;
-    public GroupPostController(GroupPostService groupPostService, JwtUtils jwtUtils) {
+
+    public GroupPostController(GroupPostService groupPostService) {
         this.groupPostService = groupPostService;
-        this.jwtUtils = jwtUtils;
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/create-post-on-group-wall/{groupId}")
     public ResponseEntity<?> createPostOnGroupWall(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @RequestBody @Valid PostRequestDto postRequestDTO,
             @PathVariable("groupId") Long groupId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupPostService.createPostOnGroupWall(username, postRequestDTO, groupId);
+        groupPostService.createPostOnGroupWall(principal.getName(), postRequestDTO, groupId);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully created!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/update-post-on-group-wall/{postId}")
     public ResponseEntity<?> updatePostOnGroupWall(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @RequestBody @Valid PostRequestDto postRequestDTO,
             @PathVariable("postId") Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupPostService.updatePostOnGroupWall(username, postRequestDTO, postId);
+        groupPostService.updatePostOnGroupWall(principal.getName(), postRequestDTO, postId);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully updated!"));
     }
 
@@ -59,10 +57,9 @@ public class GroupPostController {
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove-post-on-group-wall-current-user/{postId}")
     public ResponseEntity<?> removePostFromUserWallCurrentUser(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @PathVariable("postId") Long postId) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupPostService.removePostFromGroupWallCurrentUser(username, postId);
+        groupPostService.removePostFromGroupWallCurrentUser(principal.getName(), postId);
         return ResponseEntity.ok(new SuccessfulResponse("Post successfully removed!"));
     }
 

@@ -6,11 +6,13 @@ import social.network.dto.PostRequestDto;
 import social.network.dto.PostResponseDto;
 import social.network.exception.SocialNetworkException;
 import social.network.mapper.GroupPostMapper;
-import social.network.model.*;
+import social.network.model.ErrorCode;
+import social.network.model.Group;
+import social.network.model.GroupPost;
+import social.network.model.User;
 import social.network.repository.GroupPostRepository;
 import social.network.repository.GroupRepository;
 import social.network.repository.UserRepository;
-import social.network.security.jwt.JwtUtils;
 
 import javax.transaction.Transactional;
 import java.util.HashSet;
@@ -38,7 +40,7 @@ public class GroupPostService {
     public void createPostOnGroupWall(String username, PostRequestDto postRequestDTO, Long groupId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(groupId)) {
-            throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + groupId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Group with id: " + groupId + " does not exists!");
         }
         Set<Group> groups = groupRepository.findAllGroupByOwner(user);
         boolean groupFlag = false;
@@ -49,7 +51,7 @@ public class GroupPostService {
             }
         }
         if (!groupFlag) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "You are not owner of group with id: " + groupId);
+            throw new SocialNetworkException(ErrorCode.NotOwner, "You are not owner of group with id: " + groupId);
         }
         Group group = groupRepository.findGroupById(groupId);
         GroupPost post = new GroupPost(postRequestDTO.getText(), group);
@@ -60,7 +62,7 @@ public class GroupPostService {
     public void updatePostOnGroupWall(String username, PostRequestDto postRequestDTO, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         GroupPost post = groupPostRepository.findGroupPostById(postId);
         Set<Group> groups = groupRepository.findAllGroupByOwner(user);
@@ -72,7 +74,7 @@ public class GroupPostService {
             }
         }
         if (!groupFlag) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "You are not owner of group with id: " + post.getOwner().getId());
+            throw new SocialNetworkException(ErrorCode.NotOwner, "You are not owner of group with id: " + post.getOwner().getId());
         }
         post.setText(postRequestDTO.getText());
         groupPostRepository.save(post);
@@ -81,7 +83,7 @@ public class GroupPostService {
 
     public PostResponseDto findPostOnGroupWall(Long postId) throws SocialNetworkException {
         if (!groupRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         GroupPost post = groupPostRepository.findGroupPostById(postId);
         return groupPostMapper.toDto(post);
@@ -89,17 +91,21 @@ public class GroupPostService {
 
     public Set<PostResponseDto> findAllPostsOnGroupWall(Long groupId) throws SocialNetworkException {
         if (!groupRepository.existsById(groupId)) {
-            throw new SocialNetworkException(ErrorCode.GroupDoesNotExist, "Group with id: " + groupId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Group with id: " + groupId + " does not exists!");
         }
         Group group = groupRepository.findGroupById(groupId);
-        return findGroupPostList(group);
+        Set<PostResponseDto> postList = findGroupPostList(group);
+        if (postList.size() == 0) {
+            throw new SocialNetworkException(ErrorCode.NotExists, "Posts from group with id:" + groupId + " don't exists!");
+        }
+        return postList;
     }
 
     @Transactional
     public void removePostFromGroupWallCurrentUser(String username, Long postId) throws SocialNetworkException {
         User user = userRepository.findUserByUsername(username);
         if (!groupPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         GroupPost post = groupPostRepository.findGroupPostById(postId);
         Set<Group> groups = groupRepository.findAllGroupByOwner(user);
@@ -111,7 +117,7 @@ public class GroupPostService {
             }
         }
         if (!groupFlag) {
-            throw new SocialNetworkException(ErrorCode.YouAreNotOwner, "You are not owner of group with id: " + post.getOwner().getId());
+            throw new SocialNetworkException(ErrorCode.NotOwner, "You are not owner of group with id: " + post.getOwner().getId());
         }
         groupPostRepository.removeById(postId);
         log.trace("Post with id:" + postId + " removed!");
@@ -120,7 +126,7 @@ public class GroupPostService {
     @Transactional
     public void removePostFromGroupWall(Long postId) throws SocialNetworkException {
         if (!groupPostRepository.existsById(postId)) {
-            throw new SocialNetworkException(ErrorCode.PostDoesNotExists, "Post with id:" + postId + " does not exists!");
+            throw new SocialNetworkException(ErrorCode.NotExists, "Post with id:" + postId + " does not exists!");
         }
         groupPostRepository.removeById(postId);
         log.trace("Post with id:" + postId + " removed!");
@@ -133,6 +139,7 @@ public class GroupPostService {
             PostResponseDto postResponseDto = groupPostMapper.toDto(post);
             postResponseDtoList.add(postResponseDto);
         }
+
         return postResponseDtoList;
     }
 }

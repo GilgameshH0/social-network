@@ -7,39 +7,36 @@ import social.network.dto.GroupRequestDto;
 import social.network.dto.GroupResponseDto;
 import social.network.exception.SocialNetworkException;
 import social.network.model.SuccessfulResponse;
-import social.network.security.jwt.JwtUtils;
 import social.network.service.GroupService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.Set;
 
 @RestController
 @RequestMapping("/api/group")
 public class GroupController {
     private final GroupService groupService;
-    private final JwtUtils jwtUtils;
-    public GroupController(GroupService groupService, JwtUtils jwtUtils) {
+
+    public GroupController(GroupService groupService) {
         this.groupService = groupService;
-        this.jwtUtils = jwtUtils;
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/create-group")
     public ResponseEntity<?> createGroup(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @RequestBody @Valid GroupRequestDto groupRequestDto) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupService.createGroup(username, groupRequestDto);
+        groupService.createGroup(principal.getName(), groupRequestDto);
         return ResponseEntity.ok(new SuccessfulResponse("You successfully created group!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/remove-group-current-user/{id}")
     public ResponseEntity<?> removeGroupCurrentUser(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @PathVariable("id") Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupService.removeGroupCurrentUser(username, id);
+        groupService.removeGroupCurrentUser(principal.getName(), id);
         return ResponseEntity.ok(new SuccessfulResponse("You successfully removed your group with id: " + id + "!"));
     }
 
@@ -54,29 +51,25 @@ public class GroupController {
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/join-group/{id}")
     public ResponseEntity<?> joinGroup(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @PathVariable("id") Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupService.joinGroup(username, id);
+        groupService.joinGroup(principal.getName(), id);
         return ResponseEntity.ok(new SuccessfulResponse("You successfully joined to group with id: " + id + "!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/leave-group/{id}")
     public ResponseEntity<?> leaveGroup(
-            @RequestHeader("Authorization") String bearer,
+            Principal principal,
             @PathVariable("id") Long id) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        groupService.leaveGroup(username, id);
+        groupService.leaveGroup(principal.getName(), id);
         return ResponseEntity.ok(new SuccessfulResponse("You successfully left from group with id: " + id + "!"));
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/find-groups-current-user")
-    public Set<GroupResponseDto> findGroupsCurrentUser(
-            @RequestHeader("Authorization") String bearer) throws SocialNetworkException {
-        String username = jwtUtils.getUsernameFromTokenString(bearer);
-        return groupService.findGroupsCurrentUser(username);
+    public Set<GroupResponseDto> findGroupsCurrentUser(Principal principal) throws SocialNetworkException {
+        return groupService.findGroupsCurrentUser(principal.getName());
     }
 
     @GetMapping("/find-user-groups/{id}")

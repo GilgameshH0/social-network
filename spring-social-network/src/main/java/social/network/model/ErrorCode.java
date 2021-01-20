@@ -2,11 +2,10 @@ package social.network.model;
 
 public enum ErrorCode {
     AlreadySentFriendRequest,
+    AlreadySubscribed,
+    NotSubscribed,
+    NotYourFriend,
     UsernameOrEmailAlreadyInUse,
-    UserDoesNotExists,
-    WrongBearer,
-    GroupDoesNotExist,
-    YouAreNotOwner,
-    PostDoesNotExists,
-    CountryDoesNotExists
+    NotOwner,
+    NotExists
 }
